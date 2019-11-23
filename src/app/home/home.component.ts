@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {Course} from "../model/course";
-import {interval, Observable, of, timer, noop} from 'rxjs';
-import {catchError, delayWhen, map, retryWhen, shareReplay, tap} from 'rxjs/operators';
+import {interval, Observable, of, timer, noop, throwError} from 'rxjs';
+import {catchError, delayWhen, map, retryWhen, shareReplay, tap, finalize} from 'rxjs/operators';
 import { UtilService } from '../common/util';
 
 
@@ -28,8 +28,18 @@ export class HomeComponent implements OnInit {
       this.courses$ = http$.pipe(
         tap(() => console.log('http request executed')),
         map(res => Object.values(res['payload'])),
-        shareReplay()  // avoids sending multiple API requests for the same observable (without this, following code sends two API requests, for each async pipe)
-      );
+        shareReplay(),  // avoids sending multiple API requests for the same observable (without this, following code sends two API requests, for each async pipe)
+        catchError(err => { // catchError must provide alternate observable to current one.
+          // If we dont't want it to emit, throwError can be used. It rethrowes the error without emiting any value.
+          console.log('Error occured: ', err);
+          return throwError(err);
+        }),
+        finalize(() => {
+          console.log('finalize executed!');
+        })
+        // there are two subscription (async pipe) for these observable. SO, error will be thrown twice.
+        // if you want to throw error (and finalize) only once,move it above the shareReplay operator.
+        );
 
       // this is reactive design
       this.beginnerCourses$ = this.courses$.pipe(
