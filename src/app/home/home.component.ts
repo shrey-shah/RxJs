@@ -29,16 +29,9 @@ export class HomeComponent implements OnInit {
         tap(() => console.log('http request executed')),
         map(res => Object.values(res['payload'])),
         shareReplay(),  // avoids sending multiple API requests for the same observable (without this, following code sends two API requests, for each async pipe)
-        catchError(err => { // catchError must provide alternate observable to current one.
-          // If we dont't want it to emit, throwError can be used. It rethrowes the error without emiting any value.
-          console.log('Error occured: ', err);
-          return throwError(err);
-        }),
-        finalize(() => {
-          console.log('finalize executed!');
-        })
-        // there are two subscription (async pipe) for these observable. SO, error will be thrown twice.
-        // if you want to throw error (and finalize) only once,move it above the shareReplay operator.
+        retryWhen(errors=> errors.pipe( // new observable if error ocuurs in original request
+          delayWhen(() => timer(2000)) // send request again after delay of 2 seconds
+        )) 
         );
 
       // this is reactive design
