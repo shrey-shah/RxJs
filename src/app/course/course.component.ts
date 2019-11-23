@@ -41,18 +41,27 @@ export class CourseComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        const searchLessons$ = fromEvent<any>(this.input.nativeElement, 'keyup')
+        // const searchLessons$ = fromEvent<any>(this.input.nativeElement, 'keyup')
+        // .pipe(
+        //     map(event => event.target.value),
+        //     debounceTime(400),
+        //     distinctUntilChanged(),
+        //     switchMap(search => this.loadLessons(search)) // cancels the current observable if any new observable arrives. best suitable in search filtering
+        // )
+        // //.subscribe(console.log);
+
+        // const initialLessons$ = this.loadLessons();
+
+        // this.lessons$ = concat(initialLessons$, searchLessons$);
+
+        this.lessons$ = fromEvent<any>(this.input.nativeElement, 'keyup')
         .pipe(
             map(event => event.target.value),
-            debounceTime(400),
+            startWith(''),  // trigger observable with empty string (alternative of concating for initial and filtered data)
+            debounceTime(400), // read debouncing vs throttling
             distinctUntilChanged(),
             switchMap(search => this.loadLessons(search)) // cancels the current observable if any new observable arrives. best suitable in search filtering
         )
-        //.subscribe(console.log);
-
-        const initialLessons$ = this.loadLessons();
-
-        this.lessons$ = concat(initialLessons$, searchLessons$);
     }
 
     loadLessons(filter = ''): Observable<Lesson[]> {
