@@ -26,7 +26,9 @@ export class HomeComponent implements OnInit {
       const http$ = this._util.createHttpObservable('/api/Courses');
   
       this.courses$ = http$.pipe(
-        map(res => Object.values(res['payload']))
+        tap(() => console.log('http request executed')),
+        map(res => Object.values(res['payload'])),
+        shareReplay()  // avoids sending multiple API requests for the same observable (without this, following code sends two API requests, for each async pipe)
       );
 
       // this is reactive design
